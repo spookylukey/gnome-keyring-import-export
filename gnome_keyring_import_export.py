@@ -1,5 +1,38 @@
 #!/usr/bin/env python
 
+# Simple script for exporting gnome2 (seahorse) keyrings,
+# and re-importing on another machine.
+
+# Usage:
+#
+# Export:
+#
+#   gnome_keyring_import_export.py export somefile.json
+#
+#
+# Please note - this dumps all your passwords *unencrypted*
+# into somefile.json
+#
+# Import
+#
+#   gnome_keyring_import_export.py import somefile.json
+#
+# This attempts to be intelligent about not duplicating
+# secrets already in the keyrings - see messages.
+#
+# However, if you are moving machines, sometimes an application
+# name changes (e.g. "chrome-12345" -> "chrome-54321") so
+# you might need to do some manual fixes on somefile.json first.
+#
+# Please make BACKUP copies of your existing keyring files
+# before importing into them, in case anything goes wrong.
+# They are normally found in:
+#
+#  ~/.gnome2/keyrings 
+#  ~/.local/share/keyrings
+
+
+
 import json
 import sys
 
