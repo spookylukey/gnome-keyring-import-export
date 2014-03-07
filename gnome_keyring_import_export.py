@@ -5,7 +5,7 @@
 
 # Usage:
 #
-# Export:
+# 1) Export:
 #
 #   gnome_keyring_import_export.py export somefile.json
 #
@@ -13,7 +13,7 @@
 # Please note - this dumps all your passwords *unencrypted*
 # into somefile.json
 #
-# Import
+# 2) Import:
 #
 #   gnome_keyring_import_export.py import somefile.json
 #
@@ -28,14 +28,27 @@
 # before importing into them, in case anything goes wrong.
 # They are normally found in:
 #
-#  ~/.gnome2/keyrings 
+#  ~/.gnome2/keyrings
 #  ~/.local/share/keyrings
+#
+#
+# 3) Export Chrome passwords to Firefox
+#
+# This takes Chrome passwords stored in the Gnome keyring manager and creates a
+# file than can be imported by the Firefox "Password Exporter" extension:
+# https://addons.mozilla.org/en-US/firefox/addon/password-exporter/
+#
+#   gnome_keyring_import_export.py export_chrome_to_firefox somefile.xml
+#
 
 
 
 import json
 import sys
+import urlparse
 
+import lxml.etree
+from lxml.etree import Element
 import pygtk
 pygtk.require('2.0')
 import gtk # sets app name
@@ -77,6 +90,54 @@ def get_gnome_keyrings():
                 keyring_items.append(item)
 
     return keyrings
+
+def export_chrome_to_firefox(to_file):
+    """
+    Finds Google Chrome passwords and exports them to an XML file that can be
+    imported by the Firefox extension "Password Exporter"
+    """
+    keyrings = get_gnome_keyrings()
+    items = []
+    item_set = set()
+    for keyring_name, keyring_items in keyrings.items():
+        for item in keyring_items:
+            if (not item['display_name'].startswith('http')
+                and not item['attributes'].get('application', '').startswith('chrome')):
+                continue
+            items.append(item)
+
+            attribs = item['attributes']
+            item_def = (attribs['signon_realm'],
+                        attribs['username_value'],
+                        attribs['action_url'],
+                        attribs['username_element'],
+                        attribs['password_element'],
+                        )
+            if item_def in item_set:
+                sys.stderr.write("Warning: duplicate found for %r\n\n" % (item_def,))
+            item_set.add(item_def)
+
+    xml = items_to_firefox_xml(items)
+    file(to_file, "w").write(xml)
+
+def items_to_firefox_xml(items):
+    doc = Element('xml')
+    entries = Element('entries',
+                      dict(ext="Password Exporter", extxmlversion="1.1", type="saved", encrypt="false"))
+    doc.append(entries)
+    for item in items:
+        attribs = item['attributes']
+        url = urlparse.urlparse(attribs['signon_realm'])
+        entries.append(Element('entry',
+                               dict(host=url.scheme + "://" + url.netloc,
+                                    user=attribs['username_value'],
+                                    password=item['secret'],
+                                    formSubmitURL=attribs['action_url'],
+                                    httpRealm=url.path.lstrip('/'),
+                                    userFieldName=attribs['username_element'],
+                                    passFieldName=attribs['password_element'],
+                                    )))
+    return lxml.etree.tostring(doc, pretty_print=True)
 
 def get_item(keyring_name, id):
     try:
@@ -150,3 +211,9 @@ if __name__ == '__main__':
             export_keyrings(sys.argv[2])
         if sys.argv[1] == "import":
             import_keyrings(sys.argv[2])
+        if sys.argv[1] == "export_chrome_to_firefox":
+            export_chrome_to_firefox(sys.argv[2])
+
+    else:
+        print "See source code for usage instructions"
+        sys.exit(1)
