@@ -64,6 +64,9 @@ def items_roughly_equal(item1, item2, ignore_secret=False):
     return c1 == c2
 
 def export_keyrings(to_file):
+    file(to_file, "w").write(json.dumps(get_gnome_keyrings(), indent=2))
+
+def get_gnome_keyrings():
     keyrings = {}
     for keyring_name in gnomekeyring.list_keyring_names_sync():
         keyring_items = []
@@ -73,7 +76,7 @@ def export_keyrings(to_file):
             if item is not None:
                 keyring_items.append(item)
 
-    file(to_file, "w").write(json.dumps(keyrings, indent=2))
+    return keyrings
 
 def get_item(keyring_name, id):
     try:
