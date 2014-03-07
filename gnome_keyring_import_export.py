@@ -69,12 +69,18 @@ def export_keyrings(to_file):
         keyring_items = []
         keyrings[keyring_name] = keyring_items
         for id in gnomekeyring.list_item_ids_sync(keyring_name):
-            keyring_items.append(get_item(keyring_name, id))
+            item = get_item(keyring_name, id)
+            if item is not None:
+                keyring_items.append(item)
 
     file(to_file, "w").write(json.dumps(keyrings, indent=2))
 
 def get_item(keyring_name, id):
-    item = gnomekeyring.item_get_info_sync(keyring_name, id)
+    try:
+        item = gnomekeyring.item_get_info_sync(keyring_name, id)
+    except gnomekeyring.IOError as e:
+        sys.stderr.write("Could not examine item (%s, %s): %s\n" % (keyring_name, id, e.message))
+        return None
     return {
         'display_name': item.get_display_name(),
         'secret': item.get_secret(),
@@ -95,10 +101,11 @@ def import_keyrings(from_file):
         try:
             existing_ids = gnomekeyring.list_item_ids_sync(keyring_name)
         except gnomekeyring.NoSuchKeyringError:
-            sys.stderr.write("No keyring '%s' found. Please create this keying first" % keyring_name)
+            sys.stderr.write("No keyring '%s' found. Please create this keyring first" % keyring_name)
             sys.exit(1)
 
         existing_items = [get_item(keyring_name, id) for id in existing_ids]
+        existing_items = [i for i in existing_items if i is not None]
 
         for item in keyring_items:
             if any(items_roughly_equal(item, i) for i in existing_items):
