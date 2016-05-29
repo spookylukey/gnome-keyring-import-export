@@ -187,7 +187,7 @@ def import_keyrings(from_file):
                     for i in nearly:
                         print " " + i['secret']
 
-                    print "So skipping value from %s:" % sys.argv[2]
+                    print "So skipping value from '%s':" % from_file
                     print " " + item['secret']
                 else:
                     schema = item['attributes']['xdg:schema']
