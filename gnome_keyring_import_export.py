@@ -16,6 +16,7 @@
 # 2) Import:
 #
 #   gnome_keyring_import_export.py import somefile.json
+#   cat somefile.json | gnome_keyring_import_export.py import
 #
 # This attempts to be intelligent about not duplicating
 # secrets already in the keyrings - see messages.
@@ -158,8 +159,8 @@ def fix_attributes(d):
     return {str(k): str(v) if isinstance(v, unicode) else v for k, v in d.items()}
 
 
-def import_keyrings(from_file):
-    keyrings = json.loads(file(from_file).read())
+def import_keyrings(importdata):
+    keyrings = json.loads(importdata.read())
 
     for keyring_name, keyring_items in keyrings.items():
         try:
@@ -181,7 +182,7 @@ def import_keyrings(from_file):
                     for i in nearly:
                         print " " + i['secret']
 
-                    print "So skipping value from '%s':" % from_file
+                    print "So skipping value from %s:" % ("'"+sys.argv[2]+"'" if len(sys.argv) == 3 else "stdin")
                     print " " + item['secret']
                 else:
                     schema = item['attributes']['xdg:schema']
@@ -210,10 +211,12 @@ if __name__ == '__main__':
         if sys.argv[1] == "export":
             export_keyrings(sys.argv[2])
         if sys.argv[1] == "import":
-            import_keyrings(sys.argv[2])
+            import_keyrings(file(sys.argv[2]))
         if sys.argv[1] == "export_chrome_to_firefox":
             export_chrome_to_firefox(sys.argv[2])
 
+    elif len(sys.argv) == 2 and sys.argv[1] == "import" and not sys.stdin.isatty():
+        import_keyrings(sys.stdin)
     else:
         print "See source code for usage instructions"
         sys.exit(1)
