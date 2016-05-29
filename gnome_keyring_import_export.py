@@ -191,7 +191,7 @@ def import_keyrings(from_file):
                     elif schema == u'org.gnome.keyring.Note':
                         item_type = gnomekeyring.ITEM_NOTE
                     elif schema == u'org.gnome.keyring.NetworkPassword':
-                        item_type == gnomekeyring.ITEM_NETWORK_PASSWORD
+                        item_type = gnomekeyring.ITEM_NETWORK_PASSWORD
 
                     if item_type is not None:
                         item_id = gnomekeyring.item_create_sync(keyring_name,
