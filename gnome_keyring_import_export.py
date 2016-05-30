@@ -16,6 +16,7 @@
 # 2) Import:
 #
 #   gnome_keyring_import_export.py import somefile.json
+#   cat somefile.json | gnome_keyring_import_export.py import stdin
 #
 # This attempts to be intelligent about not duplicating
 # secrets already in the keyrings - see messages.
@@ -159,7 +160,12 @@ def fix_attributes(d):
 
 
 def import_keyrings(from_file):
-    keyrings = json.loads(file(from_file).read())
+    if sys.argv[2] == "stdin" or sys.argv[2] == "-" and not sys.stdin.isatty():
+        jsondata = sys.stdin
+    else:
+        jsondata = file(from_file)
+
+    keyrings = json.loads(jsondata.read())
 
     for keyring_name, keyring_items in keyrings.items():
         try:
