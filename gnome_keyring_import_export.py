@@ -1,7 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 
 # Simple script for exporting gnome2 (seahorse) keyrings,
 # and re-importing on another machine.
+
+# Requirements:
+#
+# Python 2.7
+#
+# System packages (assuming Debian/Ubuntu based system):
+#   python-gtk2:
+#   python-keyring
+#   python-gnomekeyring
+#
 
 # Usage:
 #
