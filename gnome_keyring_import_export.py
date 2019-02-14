@@ -46,7 +46,6 @@
 #
 
 
-
 import json
 import sys
 import urlparse
@@ -55,13 +54,16 @@ import lxml.etree
 from lxml.etree import Element
 import pygtk
 pygtk.require('2.0')
-import gtk # sets app name
+
+import gtk  # noqa sets app name
 import gnomekeyring
+
 
 def mk_copy(item):
     c = item.copy()
     c['attributes'] = c['attributes'].copy()
     return c
+
 
 def remove_insignificant_data(item, ignore_secret=False):
     item.pop('mtime', None)
@@ -70,6 +72,7 @@ def remove_insignificant_data(item, ignore_secret=False):
     item['attributes'].pop('date_created', None)
     if ignore_secret:
         item.pop('secret', None)
+
 
 def items_roughly_equal(item1, item2, ignore_secret=False):
     c1 = mk_copy(item1)
@@ -80,8 +83,10 @@ def items_roughly_equal(item1, item2, ignore_secret=False):
 
     return c1 == c2
 
+
 def export_keyrings(to_file):
     file(to_file, "w").write(json.dumps(get_gnome_keyrings(), indent=2))
+
 
 def get_gnome_keyrings():
     keyrings = {}
@@ -95,6 +100,7 @@ def get_gnome_keyrings():
 
     return keyrings
 
+
 def export_chrome_to_firefox(to_file):
     """
     Finds Google Chrome passwords and exports them to an XML file that can be
@@ -105,8 +111,8 @@ def export_chrome_to_firefox(to_file):
     item_set = set()
     for keyring_name, keyring_items in keyrings.items():
         for item in keyring_items:
-            if (not item['display_name'].startswith('http')
-                and not item['attributes'].get('application', '').startswith('chrome')):
+            if (not item['display_name'].startswith('http') and
+                    not item['attributes'].get('application', '').startswith('chrome')):
                 continue
             items.append(item)
 
@@ -123,6 +129,7 @@ def export_chrome_to_firefox(to_file):
 
     xml = items_to_firefox_xml(items)
     file(to_file, "w").write(xml)
+
 
 def items_to_firefox_xml(items):
     doc = Element('xml')
@@ -142,6 +149,7 @@ def items_to_firefox_xml(items):
                                     passFieldName=attribs['password_element'],
                                     )))
     return lxml.etree.tostring(doc, pretty_print=True)
+
 
 def get_item(keyring_name, id):
     try:
@@ -190,7 +198,7 @@ def import_keyrings(file_p, file_name):
                 else:
                     schema = item['attributes']['xdg:schema']
                     item_type = None
-                    if schema ==  u'org.freedesktop.Secret.Generic':
+                    if schema == u'org.freedesktop.Secret.Generic':
                         item_type = gnomekeyring.ITEM_GENERIC_SECRET
                     elif schema == u'org.gnome.keyring.Note':
                         item_type = gnomekeyring.ITEM_NOTE
@@ -198,12 +206,12 @@ def import_keyrings(file_p, file_name):
                         item_type = gnomekeyring.ITEM_NETWORK_PASSWORD
 
                     if item_type is not None:
-                        item_id = gnomekeyring.item_create_sync(keyring_name,
-                                                                item_type,
-                                                                item['display_name'],
-                                                                fix_attributes(item['attributes']),
-                                                                item['secret'],
-                                                                False)
+                        gnomekeyring.item_create_sync(keyring_name,
+                                                      item_type,
+                                                      item['display_name'],
+                                                      fix_attributes(item['attributes']),
+                                                      item['secret'],
+                                                      False)
                         print "Copying secret %s" % item['display_name']
                     else:
                         print "Can't handle secret '%s' of type '%s', skipping" % (item['display_name'], schema)
